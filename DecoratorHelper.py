@@ -71,12 +71,13 @@ class DecoratorHelper:
                            self.decorator_kwargs,
                            self.function_args,
                            self.function_kwargs,
-                           ).__call__(*self.function_args,
-                                      **self.function_kwargs
-                                      )
+                           ).__call__()
 
-
-
+# def a(obj):
+#     print(obj.decorator_args)
+#     return obj
+#
+# @a
 # @DecoratorHelper(100, 'l')
 # def foo(*args, **kwargs):
 #     return 'Result: ', *args
@@ -88,7 +89,6 @@ class DecoratorHelper:
 # print('decorator_args', foo.decorator_args)
 # print('function_args', foo.function_args)
 # print('__name__', foo.__name__)
-#
 #
 # @DecoratorHelper
 # def bar(*args, **kwargs):
