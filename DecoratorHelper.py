@@ -1,3 +1,51 @@
+def wraps(wrapper, wrapped):
+    try:
+        wrapper.__doc__ = wrapped.__doc__
+        wrapper.__name__ = wrapped.__name__
+        wrapper.__module__ = wrapped.__module__
+        wrapper.__qualname__ = wrapped.__qualname__
+        wrapper.__annotations__ = wrapped.__annotations__
+    except Exception as e:
+        pass
+
+
+class Wrapper:
+    """Wrapping decorated object"""
+
+    def __init__(self,
+                 function,
+                 decorator_args,
+                 function_args,
+                 ):
+
+        self.function = function
+        self.decorator_args = decorator_args
+        self.function_args = function_args
+        self.pre_function = None
+        self.post_function = None
+
+        wraps(self, self.function)
+
+    def __make_function(self, ):
+        if hasattr(self.pre_function, '__call__'):
+            self.pre_function()
+
+        if type(self.function_args[0]) != dict:
+            self.res = self.function(self.function_args)
+        else:
+            self.res = self.function()
+
+        if hasattr(self.post_function, '__call__'):
+            self.post_function()
+        return self.res
+
+    def __call__(self, *args, **kwargs):
+        if args or kwargs:
+            self.function_args = *args, kwargs
+
+        return self.__make_function()
+
+
 class DecoratorHelper:
     """This class is intended for decorating called objects.
     Adds attributes that store arguments to an object and returns it."""
@@ -9,62 +57,20 @@ class DecoratorHelper:
 
         if hasattr(args[0], '__call__'):
             self.function = args[0]
-            self.decorator_with_args = False
+            self.__decorator_with_args = False
         else:
             self.decorator_args = *args, kwargs
-            self.decorator_with_args = True
+            self.__decorator_with_args = True
 
     def __call__(self, *args, **kwargs):
-        if self.decorator_with_args:
+        if self.__decorator_with_args:
             self.function = args[0]
+            self.function_args = *args[1:], kwargs
         else:
             self.function_args = *args, kwargs
 
-        def wraps(wrapper, wrapped):
-            try:
-                wrapper.__doc__ = wrapped.__doc__
-                wrapper.__name__ = wrapped.__name__
-                wrapper.__module__ = wrapped.__module__
-                wrapper.__qualname__ = wrapped.__qualname__
-                wrapper.__annotations__ = wrapped.__annotations__
-            except Exception as e:
-                print(e)
-
-        class Wrapper:
-
-            def __init__(self,
-                         function,
-                         decorator_args,
-                         args,
-                         ):
-                self.function = function
-                self.decorator_args = decorator_args
-                self.function_args = args
-                self.pre_function = None
-                self.post_function = None
-
-                wraps(self, self.function)
-
-            def make_function(self):
-                if hasattr(self.pre_function, '__call__'):
-                    self.pre_function()
-                if self.function_args[-1]:
-                    self.res = self.function(*self.function_args)
-                else:
-                    self.res = self.function()
-
-                if hasattr(self.post_function, '__call__'):
-                    self.post_function()
-                return self.res
-
-            def __call__(self, *args, **kwargs):
-                self.function_args = *args, kwargs
-                print('*'*100, *self.function_args)
-                return self.make_function()
-
         wraps(self, self.function)
-
-        if self.decorator_with_args:
+        if self.__decorator_with_args:
             return Wrapper(self.function,
                            self.decorator_args,
                            self.function_args,
@@ -75,78 +81,71 @@ class DecoratorHelper:
                            self.function_args,
                            ).__call__()
 
+
 def a(obj):
-    print("-" * 80)
-    print('1 decorator_args', obj.decorator_args)
-    # obj.function_args = 2
-    print('2 function_args', obj.function_args)
-    print(obj(2))
-    print('3 function_args', obj.function_args)
-    print('4 function', obj.function())
-    print("-" * 80)
     def b():
         print('bla', obj.function_args)
-        if hasattr(obj, '__dict__'):
-            print(obj.__dict__)
-    obj.pre_function = b
 
+    obj.pre_function = b
     return obj
 
-# @a
-# @DecoratorHelper(100, 'l', d=5)
-# def foo(*args, **kwargs):
-#     return 'Result: ', *args
 
-
-# print("-"*30)
-# print('5 type', type(foo))
-# print('6 function_args', foo.function_args)
-# print('7 inst', (foo()))
-# print('8 function_args', foo.function_args)
-# print('9 inst', (foo(5)))
-# print('10 decorator_args', foo.decorator_args)
-# print('11 function_args', foo.function_args)
-# print('12 __name__', foo.__name__)
-#
-# @DecoratorHelper
-# def bar(*args, **kwargs):
-#     return 'Result: ', *args
-#
-#
-# print("-"*30)
-# print('type', type(bar))
-# print('inst', (bar(5)))
-# print('decorator_args', bar.decorator_args)
-# print('function_args', bar.function_args)
-# print('__name__', bar.__name__)
-#
-#
-# @a
-# @DecoratorHelper(1)
-# class Foo:
-#     def __init__(self, *args, **kwargs):
-#         self.b = None
-#     def test(self, a):
-#         return a
-#
-#
-# print("-"*30)
-# print('Foo_inst', Foo)
-# print('Foo_inst', Foo(5).test(20))
-# print('decorator_args', Foo.decorator_args)
-# print('function_args', Foo.function_args)
-# print('Foo_inst __name__', Foo.__name__)
-#
-
-@DecoratorHelper
-class Bar:
-    def test(self):
-        return '1'
-
-print("-"*30)
-print('Bar_inst', Bar)
-print('decorator_args', Bar.decorator_args)
-print('function_args', Bar.function_args)
-
-print('Bar_inst', Bar().test())
-print('Bar_inst __name__', Bar.__name__)
+if __name__ == '__main__':
+    pass
+    # @a
+    # @DecoratorHelper(100, 'l', d=5)
+    # def foo(*args, **kwargs):
+    #     return 'Result: ', *args
+    #
+    #
+    # print("-"*30,'5 type', type(foo))
+    # print("-"*30,'6 function_args', foo.function_args)
+    # print("-"*30,'7 inst', (foo()))
+    # print("-"*30,'8 function_args', foo.function_args)
+    # print("-"*30,'9 inst', (foo(5)))
+    # print("-"*30,'10 decorator_args', foo.decorator_args)
+    # print("-"*30,'11 function_args', foo.function_args)
+    # print("-"*30,'12 __name__', foo.__name__)
+    #
+    # @a
+    # @DecoratorHelper
+    # def bar(*args, **kwargs):
+    #     return 'Result: ', *args
+    #
+    #
+    # print("-"*30,'type', type(bar))
+    # print("-"*30,'inst', (bar(5)))
+    # print("-"*30,'decorator_args', bar.decorator_args)
+    # print("-"*30,'function_args', bar.function_args)
+    # print("-"*30,'__name__', bar.__name__)
+    #
+    #
+    # @a
+    # @DecoratorHelper(1)
+    # class Foo:
+    #     def __init__(self, *args, **kwargs):
+    #         self.b = None
+    #     def test(self, a):
+    #         return a
+    #
+    #
+    # print("-"*30)
+    # print('Foo_inst', Foo)
+    # print('Foo_inst', Foo(5).test(20))
+    # print('decorator_args', Foo.decorator_args)
+    # print('function_args', Foo.function_args)
+    # print('Foo_inst __name__', Foo.__name__)
+    #
+    #
+    # @a
+    # @DecoratorHelper
+    # class Bar:
+    #     def test(self):
+    #         return '1'
+    #
+    #
+    # print("-" * 30, 'Bar_inst', Bar)
+    # print("-" * 30, 'decorator_args', Bar.decorator_args)
+    # print("-" * 30, 'function_args', Bar.function_args)
+    # print("-" * 30, 'Bar_inst', Bar().test())
+    # print("-" * 30, 'Bar_inst __name__', Bar.__name__)
