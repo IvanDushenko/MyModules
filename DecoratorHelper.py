@@ -112,29 +112,48 @@ def c(obj):
 
 if __name__ == '__main__':
     pass
-    #
-    # print("-" * 150)
-    # @a
-    # @c
-    # @DecoratorHelper(100, 'l', d=5)
-    # def foo(*args, **kwargs):
-    #     return 'Result: ', *args
-    #
-    #
-    # print("-" * 30, 'type(foo)', type(foo))
-    # print("-" * 30, 'foo.__name__', foo.__name__)
-    # print("-" * 30, 'foo.__dict__', foo.__dict__)
-    # print("-" * 30, '(foo(5))', (foo(5)))
-    # print("-" * 30, 'foo.decorator_args', foo.decorator_args)
-    # print("-" * 30, 'foo.function_args', foo.function_args)
-    #
-    # print("-" * 150)
-    # @a
-    # @c
-    # @DecoratorHelper
-    # def bar(*args, **kwargs):
-    #     return 'Result: ', *args
-    #
+
+
+
+    import functools
+    def repeat(_func=None, *, num_times=2):
+        def decorator_repeat(func):
+            @functools.wraps(func)
+            def wrapper_repeat(*args, **kwargs):
+                print("-" * 150)
+                print("-" * 30, f'type({func.__name__!r})', type(func))
+                print("-" * 30, f'{func.__name__!r}.__name__', func.__name__)
+                print("-" * 30, f'{func.__name__!r}.__dict__', func.__dict__)
+                print("-" * 30, f'({func.__name__!r}(5))', (func(5)))
+                print("-" * 30, f'{func.__name__!r}.decorator_args', func.decorator_args)
+                print("-" * 30, f'{func.__name__!r}.function_args', func.function_args)
+                return func(*args, **kwargs)
+            return wrapper_repeat
+
+        if _func is None:
+            return decorator_repeat
+        else:
+            return decorator_repeat(_func)
+
+    @repeat
+    @a
+    @c
+    @DecoratorHelper(100, 'l', d=5)
+    def foo(*args, **kwargs):
+        return 'Result: ', *args
+
+
+    foo(5)
+
+
+    @a
+    @c
+    @DecoratorHelper
+    def bar(*args, **kwargs):
+        return 'Result: ', *args
+
+
+    repeat(bar(5))
     #
     # print("-" * 30, 'type(bar)', type(bar))
     # print("-" * 30, '(bar(5))', (bar(5)))
@@ -143,17 +162,18 @@ if __name__ == '__main__':
     # print("-" * 30, 'bar.__name__', bar.__name__)
     # print("-" * 30, 'bar.__dict__', bar.__dict__)
     #
-    # print("-" * 150)
-    # @a
-    # @c
-    # @DecoratorHelper(1)
-    # class Foo:
-    #     def __init__(self, *args, **kwargs):
-    #         self.b = None
-    #     def test(self, a):
-    #         return a
-    #
-    #
+    @a
+    @c
+    @repeat
+
+    @DecoratorHelper(1)
+    class Foo:
+        def __init__(self, *args, **kwargs):
+            self.b = None
+        def test(self, a):
+            return a
+
+    repeat(Foo(5))
     # print("-"*30, 'type(Foo)', type(Foo))
     # print("-"*30, 'Foo', Foo)
     # print("-"*30, 'Foo(5).test(20)', Foo(5).test(20))
@@ -162,16 +182,17 @@ if __name__ == '__main__':
     # print("-"*30, 'Foo.__name__', Foo.__name__)
     # print("-"*30, 'Foo.__dict__', Foo.__dict__)
     #
-    # print("-" * 150)
-    # @a
-    # @c
-    # @DecoratorHelper
-    # class Bar:
-    #     def __init__(self, *args, **kwargs):
-    #         self.b = None
-    #     def test(self):
-    #         return '1'
-    #
+
+    @a
+    @c
+    @DecoratorHelper
+    class Bar:
+        def __init__(self, *args, **kwargs):
+            self.b = None
+        def test(self):
+            return '1'
+
+    repeat(Bar(2))
     # print("-" * 30, 'type(Bar)', type(Bar))
     # print("-" * 30, 'Bar(2).test()', Bar(2).test())
     # print("-" * 30, 'Bar.decorator_args', Bar.decorator_args)
