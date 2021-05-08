@@ -1,54 +1,17 @@
-def wraps(wrapper, wrapped):
-    try:
-        wrapper.__doc__ = wrapped.__doc__
-        wrapper.__name__ = wrapped.__name__
-        wrapper.__module__ = wrapped.__module__
-        wrapper.__qualname__ = wrapped.__qualname__
-        wrapper.__annotations__ = wrapped.__annotations__
-    except Exception:
-        pass
-
-
-class Wrapper:
-    """Wrapping decorated object"""
-
-    def __init__(self,
-                 function,
-                 decorator_args,
-                 function_args,
-                 ):
-
-        self.function = function
-        self.decorator_args = decorator_args
-        self.function_args = function_args
-        self.pre_function = None
-        self.post_function = None
-
-        wraps(self, self.function)
-
-    def __make_function(self, ):
-        if hasattr(self.pre_function, '__call__'):
-            self.pre_function()
-
-        if type(self.function_args[0]) != dict:
-            self.res = self.function(self.function_args)
-        else:
-            self.res = self.function()
-
-        if hasattr(self.post_function, '__call__'):
-            self.post_function()
-        return self.res
-
-    def __call__(self, *args, **kwargs):
-        if args or kwargs:
-            self.function_args = *args, kwargs
-
-        return self.__make_function()
-
-
 class DecoratorHelper:
     """This class is intended for decorating called objects.
     Adds attributes that store arguments to an object and returns it."""
+
+    def wraps(self, wrapper, wrapped):
+
+        try:
+            wrapper.__doc__ = wrapped.__doc__
+            wrapper.__name__ = wrapped.__name__
+            wrapper.__module__ = wrapped.__module__
+            wrapper.__qualname__ = wrapped.__qualname__
+            wrapper.__annotations__ = wrapped.__annotations__
+        except Exception:
+            pass
 
     def __init__(self, *args, **kwargs):
         self.function = None
@@ -56,15 +19,18 @@ class DecoratorHelper:
         self.function_args = None
         self.pre_function = None
         self.post_function = None
+        self.first_call = True
 
         if hasattr(args[0], '__call__'):
             self.function = args[0]
             self.__decorator_with_args = False
+            self.wraps(self, self.function)
         else:
             self.decorator_args = *args, kwargs
             self.__decorator_with_args = True
 
     def __make_function(self, ):
+
         if hasattr(self.pre_function, '__call__'):
             self.pre_function()
 
@@ -78,40 +44,40 @@ class DecoratorHelper:
         return self.res
 
     def __call__(self, *args, **kwargs):
-        if self.__decorator_with_args:
+
+        if hasattr(args[0], '__call__'):
             self.function = args[0]
             self.function_args = *args[1:], kwargs
         else:
             self.function_args = *args, kwargs
 
-        wraps(self, self.function)
-        if self.__decorator_with_args:
-            return Wrapper(self.function,
-                           self.decorator_args,
-                           self.function_args,
-                           )
+        self.wraps(self, self.function)
+
+        if self.__decorator_with_args and self.first_call:
+            self.first_call = False
+            return self
         else:
             return self.__make_function()
 
 
-def a(obj):
-    def b():
-        print('pre_function', obj.function_args)
-
-    obj.pre_function = b
-    return obj
-
-
-def c(obj):
-    def d():
-        print('post', obj.decorator_args)
-
-    obj.post_function = d
-    return obj
-
-
 if __name__ == '__main__':
     pass
+
+
+    def a(obj):
+        def b():
+            print('pre_function', obj.function_args)
+
+        obj.pre_function = b
+        return obj
+
+
+    def c(obj):
+        def d():
+            print('post', obj.decorator_args)
+
+        obj.post_function = d
+        return obj
 
 
     def testing(func):
@@ -142,7 +108,6 @@ if __name__ == '__main__':
         return 'Result: ', *args
 
 
-    bar(5)
     testing(bar)
 
 
@@ -157,7 +122,6 @@ if __name__ == '__main__':
             return a
 
 
-    Foo(5).test(20)
     testing(Foo)
 
 
@@ -168,9 +132,8 @@ if __name__ == '__main__':
         def __init__(self, *args, **kwargs):
             self.b = None
 
-        def test(self):
-            return '1'
+        def test(self, args):
+            return args
 
 
-    Bar(2).test()
     testing(Bar)
